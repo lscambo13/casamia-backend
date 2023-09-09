@@ -19,11 +19,10 @@ async function parseVideoLink(url) {
   let stdout, stderr;
   try {
     res = await exec(`/home/ubuntu/.local/bin/yt-dlp -g ${url} -f best*[vcodec!=none][acodec!=none]`);
-
   }
   catch (err) {
-    console.log(err)
-    return
+	//   console.log(err)
+    res = await exec(`yt-dlp -g ${url} -f best*[vcodec!=none][acodec!=none]`);
   }
   return { url : res.stdout};
 }
