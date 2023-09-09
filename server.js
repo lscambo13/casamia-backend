@@ -19,7 +19,6 @@ async function parseVideoLink(url) {
   let stdout, stderr;
   try {
     res = await exec(`yt-dlp -g ${url} -f best*[vcodec!=none][acodec!=none]`);
-  console.log("sdf",res.stdout, res.stderr)
 
   }
   catch (err) {
