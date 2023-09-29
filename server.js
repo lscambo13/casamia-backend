@@ -14,8 +14,8 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
 async function parseVideoLink(url) {
-  //console.log('stdout:', stdout);
-  //console.log('stderr:', stderr);
+  // onsole.log('stdout:', stdout);
+  // console.log('stderr:', stderr);
   let stdout, stderr;
   try {
     res = await exec(`/home/ubuntu/.local/bin/yt-dlp -g ${url} -f best*[vcodec!=none][acodec!=none]`);
