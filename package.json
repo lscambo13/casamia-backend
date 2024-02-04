@@ -4,8 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+		"first-run": "npm config set script-shell powershell",
     "dev": "npx nodemon server.js",
-	  "push": "git push && sshgo \" sudo ./deploy.sh casamia \" ",
+	  "push": "git push; sshgo \" sudo ./deploy.sh casamia \" ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
