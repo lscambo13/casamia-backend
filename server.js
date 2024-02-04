@@ -8,21 +8,44 @@ const util = require('util');
 const { error, log } = require('console')
 const exec = util.promisify(require('child_process').exec);
 
-async function parseVideoLink(url) {
+async function parseVideoLink(url, res) {
   try {
-    const version = await exec(`yt-dlp --version`);
-    const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format`);
+    // const version = await exec(`yt-dlp --version`);
+    const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail`);
     const info = decode.stdout.split('\n')
-    return {
-      'version': version.stdout,
+    const out = [{
+      // 'version': version.stdout,
       'title': info[0],
-      'link': info[1],
-      'resolution': info[2],
-      'raw': info.stdout,
-      'err': info.stderr
-    };
+      'url': info[1],
+      'thumb': info[2],
+      'res': info[3],
+      // 'raw': decode.stdout,
+      // 'err': decode.stderr
+    }]
+    return res.status(200).send(out);
   } catch (err) {
-    return { 'err': err.stderr }
+    return res.status(404).send(err.stderr)
+  }
+}
+
+async function parsePlaylistLinks(url, res) {
+  try {
+    const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail --print "cut-here-123"`);
+    const info = decode.stdout.split(`cut-here-123\n`)
+    const out = [];
+    info.forEach((e) => {
+      if (!e.length) return;
+      const info = e.split('\n')
+      const template = {};
+      template.title = info[0]
+      template.url = info[1]
+      template.thumb = info[2]
+      template.res = info[3]
+      out.push(template)
+    })
+    return res.status(200).send(out);
+  } catch (err) {
+    return res.status(404).send(err)
   }
 }
 
@@ -34,12 +57,12 @@ app.get('/', async (req, res) => {
 
 app.get('/dl', async (req, res) => {
   const url = req.query.url
-  if (url)
-    if (url) {
-      const decodedURL = await parseVideoLink(url)
-      if (decodedURL.link) return res.status(200).send(decodedURL);
-      else return res.status(404).send(decodedURL);
-    } else return res.sendStatus(403)
+  if (!url) return res.sendStatus(403);
+  if (url.includes('playlist')) {
+    await parsePlaylistLinks(url, res)
+  } else {
+    await parseVideoLink(url, res);
+  }
 })
 
 // Start the server
