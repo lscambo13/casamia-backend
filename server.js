@@ -1,40 +1,45 @@
-// Import Express
 const express = require('express')
-
-// Create an instance of Express
 const app = express()
-
-// Define a port number
 const port = 8081
-
 const cors = require('cors')
 app.use(cors())
 
 const util = require('util');
+const { error, log } = require('console')
 const exec = util.promisify(require('child_process').exec);
 
 async function parseVideoLink(url) {
-  // onsole.log('stdout:', stdout);
-  // console.log('stderr:', stderr);
-  let stdout, stderr;
   try {
-    res = await exec(`/home/ubuntu/.local/bin/yt-dlp -g ${url} -f best*[vcodec!=none][acodec!=none]`);
+    const version = await exec(`yt-dlp --version`);
+    const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format`);
+    const info = decode.stdout.split('\n')
+    return {
+      'version': version.stdout,
+      'title': info[0],
+      'link': info[1],
+      'resolution': info[2],
+      'raw': info.stdout,
+      'err': info.stderr
+    };
+  } catch (err) {
+    return { 'err': err.stderr }
   }
-  catch (err) {
-	//   console.log(err)
-    res = await exec(`yt-dlp -g ${url} -f best*[vcodec!=none][acodec!=none]`);
-  }
-  return { url : res.stdout};
 }
 
+app.get('/', async (req, res) => {
+  const queries = req.query
+  console.log(queries)
+  return res.sendStatus(200)
+})
 
-// Create a route handler for the root path
-app.get('/',async (req, res) => {
-  //console.log(req.query)
-  const query = req.query.url
-  const decodedURL = await parseVideoLink(query)
-  console.log(decodedURL)
-  res.send(decodedURL);
+app.get('/dl', async (req, res) => {
+  const url = req.query.url
+  if (url)
+    if (url) {
+      const decodedURL = await parseVideoLink(url)
+      if (decodedURL.link) return res.status(200).send(decodedURL);
+      else return res.status(404).send(decodedURL);
+    } else return res.sendStatus(403)
 })
 
 // Start the server
