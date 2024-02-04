@@ -4,6 +4,9 @@ const port = 8081
 const cors = require('cors')
 app.use(cors())
 
+// https://jackett.cambo.in/api/v2.0/indexers/all/results?apikey=${secret}&Query=${query}
+
+
 const util = require('util');
 const { error, log } = require('console')
 const exec = util.promisify(require('child_process').exec);
