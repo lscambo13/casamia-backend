@@ -27,7 +27,7 @@ async function parseVideoLink(url, res) {
     }]
     return res.status(200).send(out);
   } catch (err) {
-    return res.status(404).send(err.stderr)
+    return res.status(404).send([{ 'err': err.stderr }])
   }
 }
 
