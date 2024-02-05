@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+const stream = require('stream');
 const port = 8081
 const cors = require('cors')
 app.use(cors())
@@ -8,7 +9,7 @@ app.use(cors())
 
 
 const util = require('util');
-const { error, log } = require('console')
+const { error, log } = require('console');
 const exec = util.promisify(require('child_process').exec);
 
 async function parseVideoLink(url, res) {
@@ -48,7 +49,7 @@ async function parsePlaylistLinks(url, res) {
     })
     return res.status(200).send(out);
   } catch (err) {
-    return res.status(404).send(err)
+    return res.status(404).send([{ 'err': err.stderr }])
   }
 }
 
@@ -60,12 +61,28 @@ app.get('/', async (req, res) => {
 
 app.get('/dl', async (req, res) => {
   const url = req.query.url
+  // res.set({ 'content-type': 'application/json; charset=binary' });
   if (!url) return res.sendStatus(403);
   if (url.includes('playlist')) {
     await parsePlaylistLinks(url, res)
   } else {
     await parseVideoLink(url, res);
   }
+})
+
+app.get('/stream', async (req, res) => {
+  const url = req.query.url
+  if (!url) return res.sendStatus(403);
+  // const mp4url = await streamUrl(url, res);
+
+  const readableStream = await fetch(url)
+    .then(r => stream.Readable.fromWeb(r.body));
+  readableStream.pipe(res)
+
+  // https.get(mp4url, (stream) => {
+  //   stream.pipe(res);
+  // });
+  // res.end();
 })
 
 // Start the server
