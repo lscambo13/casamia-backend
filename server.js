@@ -12,14 +12,24 @@ const util = require('util');
 const { error, log } = require('console');
 const exec = util.promisify(require('child_process').exec);
 
+function removeUnicodes(text) {
+  let str = text;
+  let newStr = str.replaceAll('\ufffd', '');
+  // let newStr = str.replace(/\\u[0-9A-Fa-f]{4}/g, '');
+
+  console.log(newStr)
+  return newStr
+}
+
 async function parseVideoLink(url, res) {
   try {
     // const version = await exec(`yt-dlp --version`);
     const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail`);
     const info = decode.stdout.split('\n')
+    const title = removeUnicodes(info[0])
     const out = [{
       // 'version': version.stdout,
-      'title': info[0],
+      'title': title,
       'url': info[1],
       'thumb': info[2],
       'res': info[3],
@@ -28,7 +38,7 @@ async function parseVideoLink(url, res) {
     }]
     return res.status(200).send(out);
   } catch (err) {
-    return res.status(404).send([{ 'err': err.stderr }])
+    return res.status(404).send([{ 'err': err.stderr, 'raw': err }])
   }
 }
 
@@ -40,8 +50,9 @@ async function parsePlaylistLinks(url, res) {
     info.forEach((e) => {
       if (!e.length) return;
       const info = e.split('\n')
+      const title = removeUnicodes(info[0])
       const template = {};
-      template.title = info[0]
+      template.title = title
       template.url = info[1]
       template.thumb = info[2]
       template.res = info[3]
@@ -49,7 +60,7 @@ async function parsePlaylistLinks(url, res) {
     })
     return res.status(200).send(out);
   } catch (err) {
-    return res.status(404).send([{ 'err': err.stderr }])
+    return res.status(404).send([{ 'err': err.stderr, 'raw': err }])
   }
 }
 
