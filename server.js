@@ -13,54 +13,58 @@ const { error, log } = require('console');
 const exec = util.promisify(require('child_process').exec);
 
 function removeUnicodes(text) {
-  // let str = text;
-  // let newStr = str.replaceAll('\ufffd', '');
+  let str = text;
+  let newStr = str.replaceAll('\ufffd', '');
   // let newStr = str.replace(/\\u[0-9A-Fa-f]{4}/g, '');
-  // console.log(newStr)
-  return text
+  console.log(newStr)
+  return newStr
 }
 
 async function parseVideoLink(url, res) {
+  let decode;
   try {
     // const version = await exec(`yt-dlp --version`);
-    const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail`);
-    const info = decode.stdout.split('\n')
-    const title = removeUnicodes(info[0])
-    const out = [{
-      // 'version': version.stdout,
-      'title': title,
-      'url': info[1],
-      'thumb': info[2],
-      'res': info[3],
-      // 'raw': decode.stdout,
-      // 'err': decode.stderr
-    }]
-    return res.status(200).send(out);
+    decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail`);
   } catch (err) {
     return res.status(200).send([{ 'err': err.stderr, 'raw': err }])
   }
+  console.log('single_decode', decode)
+  const info = decode.stdout.split('\n')
+  const title = removeUnicodes(info[0])
+  const out = [{
+    // 'version': version.stdout,
+    'title': title,
+    'url': info[1],
+    'thumb': info[2],
+    'res': info[3],
+    // 'raw': decode.stdout,
+    // 'err': decode.stderr
+  }]
+  return res.status(200).send(out);
 }
 
 async function parsePlaylistLinks(url, res) {
+  let decode;
   try {
-    const decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail --print "cut-here-123"`);
-    const info = decode.stdout.split(`cut-here-123\n`)
-    const out = [];
-    info.forEach((e) => {
-      if (!e.length) return;
-      const info = e.split('\n')
-      const title = removeUnicodes(info[0])
-      const template = {};
-      template.title = title
-      template.url = info[1]
-      template.thumb = info[2]
-      template.res = info[3]
-      out.push(template)
-    })
-    return res.status(200).send(out);
+    decode = await exec(`yt-dlp -g ${url} -f b --get-title --get-format --get-thumbnail --print "cut-here-123"`);
   } catch (err) {
     return res.status(404).send([{ 'err': err.stderr, 'raw': err }])
   }
+  console.log('list_decode', decode)
+  const info = decode.stdout.split(`cut-here-123\n`)
+  const out = [];
+  info.forEach((e) => {
+    if (!e.length) return;
+    const info = e.split('\n')
+    const title = removeUnicodes(info[0])
+    const template = {};
+    template.title = title
+    template.url = info[1]
+    template.thumb = info[2]
+    template.res = info[3]
+    out.push(template)
+  })
+  return res.status(200).send(out);
 }
 
 app.get('/', async (req, res) => {
