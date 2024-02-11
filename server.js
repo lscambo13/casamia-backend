@@ -210,13 +210,30 @@ app.get('/getInfo', async (req, res) => {
   {
     'title': undefined,
     'source': url,
-    'stream': undefined,
+    'streams': {
+      'bestVideoWithAudio': {
+        'stream': '',
+        'info': ''
+      },
+      'secondBestVideoWithAudio': {
+        'stream': '',
+        'info': ''
+      },
+      'bestAudioOnly': {
+        'stream': '',
+        'info': ''
+      },
+      'bestVideoOnly': {
+        'stream': '',
+        'info': ''
+      },
+    },
     'thumbnail': undefined,
     'resolutions': [],
-    'err': undefined
+    'err': ''
   }
 
-  const config = `-g -f b --get-thumbnail --list-formats --get-title`
+  const config = `-g -f b,b.2,ba,bv --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
 
   if (url.includes('playlist')) {
     result.err = 'Playlists not supported temporarily.'
@@ -224,12 +241,35 @@ app.get('/getInfo', async (req, res) => {
   } else {
     scan = exec(`${ytdlp} ${url} ${config}`, function (err, stdout, stderr) {
       if (stdout) {
-        result.resolutions = regexResolution(stdout)
-        const info = stdout.split('\n')
-        // log(info)
-        result.thumbnail = info[info.length - 2]
-        result.stream = info[info.length - 3]
-        result.title = info[info.length - 4]
+        const info = stdout.split('cut-here\n')
+        log(info)
+        const formats = info[0]
+        result.resolutions = regexResolution(formats)
+
+        const bestVideoWithAudio = info[1].split('\n')
+        result.streams.bestVideoWithAudio.stream = bestVideoWithAudio[2]
+        result.streams.bestVideoWithAudio.info = bestVideoWithAudio[0]
+
+        const secondBest = info[2]?.split('\n')
+        if (secondBest) {
+          result.streams.secondBestVideoWithAudio.stream = secondBest[2]
+          result.streams.secondBestVideoWithAudio.info = secondBest[0]
+        }
+
+        const bestAudioOnly = info[3]?.split('\n')
+        if (bestAudioOnly) {
+          result.streams.bestAudioOnly.stream = bestAudioOnly[2]
+          result.streams.bestAudioOnly.info = bestAudioOnly[0]
+        }
+
+        const bestVideoOnly = info[4]?.split('\n')
+        if (bestAudioOnly) {
+          result.streams.bestVideoOnly.stream = bestVideoOnly[2]
+          result.streams.bestVideoOnly.info = bestVideoOnly[0]
+        }
+
+        result.title = bestVideoWithAudio[1]
+        result.thumbnail = bestVideoWithAudio[3]
       }
       if (stderr) result.err = result.err
       if (err) result.err = result.err + '\n' + err
