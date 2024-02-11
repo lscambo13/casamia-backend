@@ -220,6 +220,7 @@ app.get('/getInfo', async (req, res) => {
 
   if (url.includes('playlist')) {
     result.err = 'Playlists not supported temporarily.'
+    res.send([result])
   } else {
     scan = exec(`${ytdlp} ${url} ${config}`, function (err, stdout, stderr) {
       if (stdout) {
@@ -237,7 +238,7 @@ app.get('/getInfo', async (req, res) => {
   }
   res.on('close', () => {
     log(req.path, 'closed')
-    scan.kill('SIGINT');
+    scan?.kill('SIGINT');
     log(result)
   })
 })
