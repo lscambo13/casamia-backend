@@ -262,14 +262,14 @@ app.get('/getInfo', async (req, res) => {
 
         const secondBest = info[2]?.split('\n')
         if (secondBest &&
-          secondBest[2] !== bestVideoWithAudio[0]) {
+          secondBest[2] !== bestVideoWithAudio[2]) {
           result.streams.secondBestVideoWithAudio.stream = secondBest[2]
           result.streams.secondBestVideoWithAudio.info = secondBest[0]
         }
 
         const thirdBest = info[2]?.split('\n')
         if (thirdBest &&
-          thirdBest[2] !== secondBest[0]) {
+          thirdBest[2] !== secondBest[2]) {
           result.streams.thirdBestVideoWithAudio.stream = thirdBest[2]
           result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
         }
@@ -282,7 +282,7 @@ app.get('/getInfo', async (req, res) => {
 
         const bestVideoOnly = info[4]?.split('\n')
         if (bestVideoOnly &&
-          bestVideoOnly[2] !== bestVideoWithAudio[0]) {
+          bestVideoOnly[2] !== bestVideoWithAudio[2]) {
           result.streams.bestVideoOnly.stream = bestVideoOnly[2]
           result.streams.bestVideoOnly.info = bestVideoOnly[0]
         }
