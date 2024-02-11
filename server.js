@@ -38,11 +38,17 @@ if (process.platform === 'win32') {
 // }
 
 function regexResolution(text) {
-  let matches = text.match(/\d+x\d+/g);
-  const set = new Set(matches)
-  matches = Array.from(set)
-  // log(matches)
-  return matches
+  let fullResolutions = text.match(/\d+x\d+/g);
+
+  const set = new Set(fullResolutions)
+  fullResolutions = Array.from(set)
+  let heights = []
+  fullResolutions.forEach((e) => {
+    const x = e.split('x')
+    heights.push(x[1])
+  })
+  log(heights)
+  return [heights, fullResolutions]
 }
 
 // function quickParseVideoLink(url) {
@@ -211,6 +217,10 @@ app.get('/getInfo', async (req, res) => {
     'title': undefined,
     'source': url,
     'streams': {
+      'bestVideoOnly': {
+        'stream': '',
+        'info': ''
+      },
       'bestVideoWithAudio': {
         'stream': '',
         'info': ''
@@ -219,11 +229,11 @@ app.get('/getInfo', async (req, res) => {
         'stream': '',
         'info': ''
       },
-      'bestAudioOnly': {
+      'thirdBestVideoWithAudio': {
         'stream': '',
         'info': ''
       },
-      'bestVideoOnly': {
+      'bestAudioOnly': {
         'stream': '',
         'info': ''
       },
@@ -233,7 +243,7 @@ app.get('/getInfo', async (req, res) => {
     'err': ''
   }
 
-  const config = `-g -f b,b.2,ba,bv --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
+  const config = `-g -f b.1,b.2,b.3,ba,bv --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
 
   if (url.includes('playlist')) {
     result.err = 'Playlists not supported temporarily.'
@@ -251,9 +261,17 @@ app.get('/getInfo', async (req, res) => {
         result.streams.bestVideoWithAudio.info = bestVideoWithAudio[0]
 
         const secondBest = info[2]?.split('\n')
-        if (secondBest) {
+        if (secondBest &&
+          secondBest[0] !== bestVideoWithAudio[0]) {
           result.streams.secondBestVideoWithAudio.stream = secondBest[2]
           result.streams.secondBestVideoWithAudio.info = secondBest[0]
+        }
+
+        const thirdBest = info[2]?.split('\n')
+        if (thirdBest &&
+          thirdBest[0] !== secondBest[0]) {
+          result.streams.thirdBestVideoWithAudio.stream = thirdBest[2]
+          result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
         }
 
         const bestAudioOnly = info[3]?.split('\n')
@@ -263,7 +281,8 @@ app.get('/getInfo', async (req, res) => {
         }
 
         const bestVideoOnly = info[4]?.split('\n')
-        if (bestAudioOnly) {
+        if (bestVideoOnly &&
+          bestVideoOnly[0] !== bestVideoWithAudio[0]) {
           result.streams.bestVideoOnly.stream = bestVideoOnly[2]
           result.streams.bestVideoOnly.info = bestVideoOnly[0]
         }
