@@ -51,6 +51,16 @@ function regexResolution(text) {
   return [heights, fullResolutions]
 }
 
+function getResolutionHeight(text) {
+  if (text == 'SD') return '480';
+  else if (text == 'HD') return '720';
+  else if (text == 'FHD') return '1080';
+  else if (text == 'QHD') return '1440';
+  else if (text == 'UHD') return '2160';
+  else if (text == 'UHD+') return '4320';
+  else return text;
+}
+
 // function quickParseVideoLink(url) {
 //   let decode;
 //   try {
@@ -127,6 +137,70 @@ app.get('/test', async (req, res) => {
   res.send(query)
   return
 })
+
+app.get('/getFreeDownload', (req, res) => {
+  const height = getResolutionHeight(req.query.height)
+  res.header('Content-Disposition', `attachment; filename=${req.query.title} [${height}p].mp4`);
+
+  const config =
+    [
+      req.query.url,
+      '--ffmpeg-location', ffmpeg,
+      '-o', '-',
+      '-S', `res:${height},fps`
+    ]
+
+  const spawn = require('child_process').spawn;
+  const ytDlpProcess = spawn(ytdlp, config);
+
+  ytDlpProcess.on('close', function (code, signal) {
+    console.log('spawn process exited with ' +
+      `code ${code} and signal ${signal}`);
+  });
+
+  ytDlpProcess.stdout.pipe(res);
+});
+
+// app.get('/pipe', (req, res) => {
+//   // Handle client request here
+//   // Pipe yt-dlp output to the response
+//   const config =
+//     [
+//       req.query.url,
+//       '--ffmpeg-location', ffmpeg,
+//       '-o', `${cache}/%(title)s [%(height)sp].%(ext)s`,
+//       '-S', `res:1080,fps`
+//     ]
+
+//   const configName =
+//     [
+//       req.query.url,
+//       '--print', 'filename',
+//       '-o', `${cache}/%(title)s [%(height)sp].%(ext)s`,
+//       '-S', `res:1080,fps`
+//     ]
+
+//   const spawn = require('child_process').spawn;
+
+//   res.header('Content-Disposition', 'attachment; filename="new file name.mp4"');
+//   const ytDlpProcessName = spawn(ytdlp, configName);
+//   const ytDlpProcess = spawn(ytdlp, config);
+
+
+//   ytDlpProcessName.stdout.on('data', (data) => {
+//     const name = ytDlpProcessName.stdout.
+//       console.log(name)
+//     console.log(`stdout: ${data}`);
+//   });
+
+//   ytDlpProcess.on('close', function (code, signal) {
+//     console.log('spawn process exited with ' +
+//       `code ${code} and signal ${signal}`);
+//   });
+
+//   ytDlpProcess.stdout.pipe(res);
+//   // return
+// });
 
 app.get('/dl', async (req, res) => {
   let scan
@@ -217,10 +291,10 @@ app.get('/getInfo', async (req, res) => {
     'title': undefined,
     'source': url,
     'streams': {
-      'bestVideoOnly': {
-        'stream': '',
-        'info': ''
-      },
+      // 'bestVideoOnly': {
+      //   'stream': '',
+      //   'info': ''
+      // },
       'bestVideoWithAudio': {
         'stream': '',
         'info': ''
@@ -233,10 +307,10 @@ app.get('/getInfo', async (req, res) => {
         'stream': '',
         'info': ''
       },
-      'bestAudioOnly': {
-        'stream': '',
-        'info': ''
-      },
+      // 'bestAudioOnly': {
+      //   'stream': '',
+      //   'info': ''
+      // },
     },
     'thumbnail': undefined,
     'resolutions': [],
@@ -274,18 +348,18 @@ app.get('/getInfo', async (req, res) => {
           result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
         }
 
-        const bestAudioOnly = info[3]?.split('\n')
-        if (bestAudioOnly) {
-          result.streams.bestAudioOnly.stream = bestAudioOnly[2]
-          result.streams.bestAudioOnly.info = bestAudioOnly[0]
-        }
+        // const bestAudioOnly = info[3]?.split('\n')
+        // if (bestAudioOnly) {
+        //   result.streams.bestAudioOnly.stream = bestAudioOnly[2]
+        //   result.streams.bestAudioOnly.info = bestAudioOnly[0]
+        // }
 
-        const bestVideoOnly = info[4]?.split('\n')
-        if (bestVideoOnly &&
-          bestVideoOnly[2] !== bestVideoWithAudio[2]) {
-          result.streams.bestVideoOnly.stream = bestVideoOnly[2]
-          result.streams.bestVideoOnly.info = bestVideoOnly[0]
-        }
+        // const bestVideoOnly = info[4]?.split('\n')
+        // if (bestVideoOnly &&
+        //   bestVideoOnly[2] !== bestVideoWithAudio[2]) {
+        //   result.streams.bestVideoOnly.stream = bestVideoOnly[2]
+        //   result.streams.bestVideoOnly.info = bestVideoOnly[0]
+        // }
 
         result.title = bestVideoWithAudio[1]
         result.thumbnail = bestVideoWithAudio[3]
