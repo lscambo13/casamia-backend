@@ -14,7 +14,7 @@ if (process.platform === 'win32') {
   ffmpeg = "./ffmpeg-n6.1-latest-win64-gpl-6.1/bin/ffmpeg.exe"
   cache = "./yt-dlp-cache"
 } else {
-  ytdlp = "~/.local/bin/yt-dlp"
+  ytdlp = "/home/ubuntu/.local/bin/yt-dlp"
   ffmpeg = "./ffmpeg-n6.1-latest-linux64-gpl-6.1/bin/ffmpeg.exe"
   cache = "./yt-dlp-cache"
 }
