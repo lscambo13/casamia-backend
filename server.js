@@ -318,7 +318,7 @@ app.get('/getInfo', async (req, res) => {
   }
 
   // const config = `-g -f b.1,b.2,b.3,ba,bv --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
-  const config = `-g -f b.1 --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
+  const config = `-g -f b.1 --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(resolution)s"`
 
 
   if (url.includes('playlist')) {
@@ -334,7 +334,8 @@ app.get('/getInfo', async (req, res) => {
 
         const bestVideoWithAudio = info[1].split('\n')
         result.streams.bestVideoWithAudio.stream = bestVideoWithAudio[2]
-        result.streams.bestVideoWithAudio.info = bestVideoWithAudio[0]
+        let i = Math.min(...bestVideoWithAudio[0].split('x'))
+        result.streams.bestVideoWithAudio.info = i
 
         // const secondBest = info[2]?.split('\n')
         // if (secondBest &&
