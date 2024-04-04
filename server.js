@@ -138,7 +138,7 @@ app.get('/test', async (req, res) => {
   return
 })
 
-app.get('/getFreeDownload', (req, res) => {
+app.get('/getFreeDownload', async (req, res) => {
   const height = getResolutionHeight(req.query.height)
   res.header('Content-Disposition', `attachment; filename=${req.query.title} [${height}p].mp4`);
 
@@ -299,25 +299,27 @@ app.get('/getInfo', async (req, res) => {
         'stream': '',
         'info': ''
       },
-      'secondBestVideoWithAudio': {
-        'stream': '',
-        'info': ''
-      },
-      'thirdBestVideoWithAudio': {
-        'stream': '',
-        'info': ''
-      },
-      // 'bestAudioOnly': {
+      // 'secondBestVideoWithAudio': {
       //   'stream': '',
       //   'info': ''
       // },
+      // 'thirdBestVideoWithAudio': {
+      //   'stream': '',
+      //   'info': ''
+      // },
+      'bestAudioOnly': {
+        'stream': '',
+        'info': ''
+      },
     },
     'thumbnail': undefined,
     'resolutions': [],
     'err': ''
   }
 
-  const config = `-g -f b.1,b.2,b.3,ba,bv --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
+  // const config = `-g -f b.1,b.2,b.3,ba,bv --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
+  const config = `-g -f b.1,ba --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
+
 
   if (url.includes('playlist')) {
     result.err = 'Playlists not supported temporarily.'
@@ -334,25 +336,25 @@ app.get('/getInfo', async (req, res) => {
         result.streams.bestVideoWithAudio.stream = bestVideoWithAudio[2]
         result.streams.bestVideoWithAudio.info = bestVideoWithAudio[0]
 
-        const secondBest = info[2]?.split('\n')
-        if (secondBest &&
-          secondBest[2] !== bestVideoWithAudio[2]) {
-          result.streams.secondBestVideoWithAudio.stream = secondBest[2]
-          result.streams.secondBestVideoWithAudio.info = secondBest[0]
-        }
-
-        const thirdBest = info[2]?.split('\n')
-        if (thirdBest &&
-          thirdBest[2] !== secondBest[2]) {
-          result.streams.thirdBestVideoWithAudio.stream = thirdBest[2]
-          result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
-        }
-
-        // const bestAudioOnly = info[3]?.split('\n')
-        // if (bestAudioOnly) {
-        //   result.streams.bestAudioOnly.stream = bestAudioOnly[2]
-        //   result.streams.bestAudioOnly.info = bestAudioOnly[0]
+        // const secondBest = info[2]?.split('\n')
+        // if (secondBest &&
+        //   secondBest[2] !== bestVideoWithAudio[2]) {
+        //   result.streams.secondBestVideoWithAudio.stream = secondBest[2]
+        //   result.streams.secondBestVideoWithAudio.info = secondBest[0]
         // }
+
+        // const thirdBest = info[2]?.split('\n')
+        // if (thirdBest &&
+        //   thirdBest[2] !== secondBest[2]) {
+        //   result.streams.thirdBestVideoWithAudio.stream = thirdBest[2]
+        //   result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
+        // }
+
+        const bestAudioOnly = info[2]?.split('\n')
+        if (bestAudioOnly) {
+          result.streams.bestAudioOnly.stream = bestAudioOnly[2]
+          result.streams.bestAudioOnly.info = bestAudioOnly[0]
+        }
 
         // const bestVideoOnly = info[4]?.split('\n')
         // if (bestVideoOnly &&
