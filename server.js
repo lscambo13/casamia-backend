@@ -45,7 +45,7 @@ function regexResolution(text) {
   let heights = []
   fullResolutions.forEach((e) => {
     const x = e.split('x')
-    heights.push(x[1])
+    heights.push(Math.min(...x))
   })
   log(heights)
   return [heights, fullResolutions]
