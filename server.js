@@ -307,10 +307,10 @@ app.get('/getInfo', async (req, res) => {
       //   'stream': '',
       //   'info': ''
       // },
-      'bestAudioOnly': {
-        'stream': '',
-        'info': ''
-      },
+      // 'bestAudioOnly': {
+      //   'stream': '',
+      //   'info': ''
+      // },
     },
     'thumbnail': undefined,
     'resolutions': [],
@@ -318,7 +318,7 @@ app.get('/getInfo', async (req, res) => {
   }
 
   // const config = `-g -f b.1,b.2,b.3,ba,bv --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
-  const config = `-g -f b.1,ba --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
+  const config = `-g -f b.1 --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
 
 
   if (url.includes('playlist')) {
@@ -350,11 +350,11 @@ app.get('/getInfo', async (req, res) => {
         //   result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
         // }
 
-        const bestAudioOnly = info[2]?.split('\n')
-        if (bestAudioOnly) {
-          result.streams.bestAudioOnly.stream = bestAudioOnly[2]
-          result.streams.bestAudioOnly.info = bestAudioOnly[0]
-        }
+        // const bestAudioOnly = info[2]?.split('\n')
+        // if (bestAudioOnly) {
+        //   result.streams.bestAudioOnly.stream = bestAudioOnly[2]
+        //   result.streams.bestAudioOnly.info = bestAudioOnly[0]
+        // }
 
         // const bestVideoOnly = info[4]?.split('\n')
         // if (bestVideoOnly &&
