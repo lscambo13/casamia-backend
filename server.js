@@ -138,7 +138,7 @@ app.get('/test', async (req, res) => {
   return
 })
 
-app.get('/getFreeDownload', async (req, res) => {
+app.get('/getDL', async (req, res) => {
   const height = getResolutionHeight(req.query.height)
   res.header('Content-Disposition', `attachment; filename=${req.query.title} [${height}p].mp4`);
 
