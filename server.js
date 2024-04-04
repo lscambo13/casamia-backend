@@ -3,10 +3,8 @@ const app = express()
 const port = 8081
 const cors = require('cors')
 app.use(cors())
-const util = require('util');
-const { error, log } = require('console');
-const { exec, spawn, execSync, spawnSync } = require('child_process');
-// const exec = util.promisify(require('child_process').exec);
+const { log } = require('console');
+const { exec, spawn } = require('child_process');
 
 let ytdlp, ffmpeg, cache;
 if (process.platform === 'win32') {
@@ -19,27 +17,10 @@ if (process.platform === 'win32') {
   cache = "./yt-dlp-cache"
 }
 
-// function dlConfig() {
-//   const config = `
-// --get-title --get-format --get-thumbnail
-// -o "./yt-dlp-cache/%(title)s [%(height)sp].%(ext)s"
-// --merge-output-format mp4
-// --windows-filenames
-// -S "res:2160,fps"
-// `;
-//   const str = config.replaceAll('\n', ' ')
-//   return str
-// }
-
 // https://jackett.cambo.in/api/v2.0/indexers/all/results?apikey=${secret}&Query=${query}
-
-// function removeUnicode(text) {
-//   return text.replaceAll('\ufffd', '');
-// }
 
 function regexResolution(text) {
   let fullResolutions = text.match(/\d+x\d+/g);
-
   const set = new Set(fullResolutions)
   fullResolutions = Array.from(set)
   let heights = []
@@ -61,70 +42,6 @@ function getResolutionHeight(text) {
   else return text;
 }
 
-// function quickParseVideoLink(url) {
-//   let decode;
-//   try {
-//     decode = exec(`yt-dlp -g ${url} -f b ${dlConfig()}`);
-//   } catch (err) {
-//     log(err)
-//     return [{ 'raw': err, 'err': err.stderr }];
-//   }
-//   log('single_decode', decode)
-//   const info = decode.stdout.split('\n')
-//   const title = removeUnicode(info[0])
-//   const out = [{
-//     'title': title,
-//     'url': info[1],
-//     'thumb': info[2],
-//     'res': info[3]
-//   }]
-//   return out;
-// }
-
-// function serveVideo(url, height) {
-//   let decode;
-//   try {
-//     decode = exec(`yt-dlp ${url} ${dlConfig()}`);
-//   } catch (err) {
-//     log(err)
-//     return [{ 'raw': err, 'err': err.stderr }];
-//   }
-//   log('single_decode', decode)
-//   const info = decode.stdout.split('\n')
-//   const title = removeUnicode(info[0])
-//   const out = [{
-//     'title': title,
-//     'url': info[1],
-//     'thumb': info[2],
-//     'res': info[3]
-//   }]
-//   return out;
-// }
-
-// function parsePlaylistLinks(url) {
-//   let decode;
-//   try {
-//     decode = exec(`yt-dlp -g ${url} ${dlConfig()} --print "cut-here-123"`);
-//   } catch (err) {
-//     return [{ 'raw': err, 'err': err.stderr }]
-//   }
-//   log('list_decode', decode)
-//   const info = decode.stdout.split(`cut-here-123\n`)
-//   const out = [];
-//   info.forEach((e) => {
-//     if (!e.length) return;
-//     const info = e.split('\n')
-//     const title = removeUnicode(info[0])
-//     const template = {};
-//     template.title = title
-//     template.url = info[1]
-//     template.thumb = info[2]
-//     template.res = info[3]
-//     out.push(template)
-//   })
-//   return out;
-// }
-
 app.get('/', async (req, res) => {
   const queries = req.query
   log(queries)
@@ -142,13 +59,12 @@ app.get('/getDL', async (req, res) => {
   const height = getResolutionHeight(req.query.height)
   res.header('Content-Disposition', `attachment; filename=${req.query.title} [${height}p].mp4`);
 
-  const config =
-    [
-      req.query.url,
-      '--ffmpeg-location', ffmpeg,
-      '-o', '-',
-      '-S', `res:${height},fps`
-    ]
+  const config = [
+    req.query.url,
+    '--ffmpeg-location', ffmpeg,
+    '-o', '-',
+    '-S', `res:${height},fps`
+  ]
 
   const spawn = require('child_process').spawn;
   const ytDlpProcess = spawn(ytdlp, config);
@@ -160,47 +76,6 @@ app.get('/getDL', async (req, res) => {
 
   ytDlpProcess.stdout.pipe(res);
 });
-
-// app.get('/pipe', (req, res) => {
-//   // Handle client request here
-//   // Pipe yt-dlp output to the response
-//   const config =
-//     [
-//       req.query.url,
-//       '--ffmpeg-location', ffmpeg,
-//       '-o', `${cache}/%(title)s [%(height)sp].%(ext)s`,
-//       '-S', `res:1080,fps`
-//     ]
-
-//   const configName =
-//     [
-//       req.query.url,
-//       '--print', 'filename',
-//       '-o', `${cache}/%(title)s [%(height)sp].%(ext)s`,
-//       '-S', `res:1080,fps`
-//     ]
-
-//   const spawn = require('child_process').spawn;
-
-//   res.header('Content-Disposition', 'attachment; filename="new file name.mp4"');
-//   const ytDlpProcessName = spawn(ytdlp, configName);
-//   const ytDlpProcess = spawn(ytdlp, config);
-
-
-//   ytDlpProcessName.stdout.on('data', (data) => {
-//     const name = ytDlpProcessName.stdout.
-//       console.log(name)
-//     console.log(`stdout: ${data}`);
-//   });
-
-//   ytDlpProcess.on('close', function (code, signal) {
-//     console.log('spawn process exited with ' +
-//       `code ${code} and signal ${signal}`);
-//   });
-
-//   ytDlpProcess.stdout.pipe(res);
-//   // return
-// });
 
 app.get('/dl', async (req, res) => {
   let scan
@@ -291,35 +166,17 @@ app.get('/getInfo', async (req, res) => {
     'title': undefined,
     'source': url,
     'streams': {
-      // 'bestVideoOnly': {
-      //   'stream': '',
-      //   'info': ''
-      // },
       'bestVideoWithAudio': {
         'stream': '',
         'info': ''
       },
-      // 'secondBestVideoWithAudio': {
-      //   'stream': '',
-      //   'info': ''
-      // },
-      // 'thirdBestVideoWithAudio': {
-      //   'stream': '',
-      //   'info': ''
-      // },
-      // 'bestAudioOnly': {
-      //   'stream': '',
-      //   'info': ''
-      // },
     },
     'thumbnail': undefined,
     'resolutions': [],
     'err': ''
   }
 
-  // const config = `-g -f b.1,b.2,b.3,ba,bv --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(height)s"`
   const config = `-g -f b.1 --restrict-filenames --get-thumbnail --list-formats --get-title --print "cut-here" --print "%(resolution)s"`
-
 
   if (url.includes('playlist')) {
     result.err = 'Playlists not supported temporarily.'
@@ -336,33 +193,6 @@ app.get('/getInfo', async (req, res) => {
         result.streams.bestVideoWithAudio.stream = bestVideoWithAudio[2]
         let i = Math.min(...bestVideoWithAudio[0].split('x'))
         result.streams.bestVideoWithAudio.info = i
-
-        // const secondBest = info[2]?.split('\n')
-        // if (secondBest &&
-        //   secondBest[2] !== bestVideoWithAudio[2]) {
-        //   result.streams.secondBestVideoWithAudio.stream = secondBest[2]
-        //   result.streams.secondBestVideoWithAudio.info = secondBest[0]
-        // }
-
-        // const thirdBest = info[2]?.split('\n')
-        // if (thirdBest &&
-        //   thirdBest[2] !== secondBest[2]) {
-        //   result.streams.thirdBestVideoWithAudio.stream = thirdBest[2]
-        //   result.streams.thirdBestVideoWithAudio.info = thirdBest[0]
-        // }
-
-        // const bestAudioOnly = info[2]?.split('\n')
-        // if (bestAudioOnly) {
-        //   result.streams.bestAudioOnly.stream = bestAudioOnly[2]
-        //   result.streams.bestAudioOnly.info = bestAudioOnly[0]
-        // }
-
-        // const bestVideoOnly = info[4]?.split('\n')
-        // if (bestVideoOnly &&
-        //   bestVideoOnly[2] !== bestVideoWithAudio[2]) {
-        //   result.streams.bestVideoOnly.stream = bestVideoOnly[2]
-        //   result.streams.bestVideoOnly.info = bestVideoOnly[0]
-        // }
 
         result.title = bestVideoWithAudio[1]
         result.thumbnail = bestVideoWithAudio[3]
