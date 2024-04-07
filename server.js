@@ -5,6 +5,7 @@ const cors = require('cors')
 app.use(cors())
 const { log } = require('console');
 const { exec, spawn } = require('child_process');
+const fs = require('fs');
 
 let ytdlp, ffmpeg, cache;
 if (process.platform === 'win32') {
@@ -18,6 +19,8 @@ if (process.platform === 'win32') {
 }
 
 // https://jackett.cambo.in/api/v2.0/indexers/all/results?apikey=${secret}&Query=${query}
+// yt-dlp.exe https://www.youtube.com/watch?v=8SeRU_ZPDkE --ffmpeg-location "./ffmpeg-n6.1-latest-win64-gpl-6.1/bin/ffmpeg.exe" --downloader ffmpeg -S res:1080,fps
+// http://localhost:8081/getDL/?url=https://www.youtube.com/watch?v=8SeRU_ZPDkE&height=1080&title=test
 
 function regexResolution(text) {
   let fullResolutions = text.match(/\d+x\d+/g);
@@ -30,6 +33,14 @@ function regexResolution(text) {
   })
   log(heights)
   return [heights, fullResolutions]
+}
+
+function deleteDir(dir) {
+  fs.rmSync(dir,
+    { recursive: true, force: true },
+    (err) => {
+      console.log(err)
+    })
 }
 
 function getResolutionHeight(text) {
@@ -55,6 +66,75 @@ app.get('/test', async (req, res) => {
   return
 })
 
+app.get('/cdn', async (req, res) => {
+  const workDir = req.query.workDir
+  const outName = req.query.outName
+  const outputFile = workDir + outName + '.mkv'
+  res.header('Content-Disposition', `attachment; filename=${outName}`);
+
+  const fileStream = fs.createReadStream(`${outputFile}.mkv`);
+  fileStream.on('error', (err) => {
+    console.log(err)
+  })
+  fileStream.pipe(res);
+  fileStream.on('close', () => {
+    deleteDir(workDir)
+  })
+
+})
+
+app.get('/getDL2', async (req, res) => {
+
+  const timestamp = Date.now();
+  const workDir = `${cache}/${timestamp}`
+  fs.mkdirSync(workDir,
+    { recursive: true, force: true },
+    (err) => {
+      console.log(err)
+    }
+  )
+  const height = getResolutionHeight(req.query.height)
+  const outputFile = `${cache}/${timestamp}/${req.query.title} [${height}p]`
+  const outName = `${req.query.title} [${height}p].mkv`
+
+  const config = [
+    req.query.url,
+    '--ffmpeg-location', ffmpeg,
+    '-o', outputFile,
+    '--merge-output-format', 'mkv',
+    '-S', `res:${height},fps`
+  ]
+
+  const spawn = require('child_process').spawn;
+  const ytDlpProcess = spawn(ytdlp, config);
+
+  ytDlpProcess.on('close', function (code, signal) {
+    console.log('spawn process exited with ' +
+      `code ${code} and signal ${signal}`);
+
+    if (fs.existsSync(`${outputFile}.mkv`)) {
+      res.write(`SUCCESS`)
+      res.write(`/cdn/?workDir=${encodeURIComponent(workDir)}&outName=${encodeURIComponent(outName)}`)
+    } else {
+      deleteDir(workDir)
+      res.write(`FAILED!`)
+    }
+    res.end();
+  });
+
+  ytDlpProcess.stdout.on('data', (d) => {
+    return res.write(d)
+  })
+
+  res.on('close', () => {
+    ytDlpProcess.stdout.destroy();
+    ytDlpProcess.stderr.destroy();
+    ytDlpProcess.kill('SIGINT');
+  })
+  // ytDlpProcess.stdout.pipe(res);
+});
+
+
 app.get('/getDL', async (req, res) => {
   const height = getResolutionHeight(req.query.height)
   res.header('Content-Disposition', `attachment; filename=${req.query.title} [${height}p].mp4`);
@@ -62,6 +142,7 @@ app.get('/getDL', async (req, res) => {
   const config = [
     req.query.url,
     '--ffmpeg-location', ffmpeg,
+    '--downloader', 'ffmpeg',
     '-o', '-',
     '-S', `res:${height},fps`
   ]
