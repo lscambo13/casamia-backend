@@ -91,6 +91,7 @@ app.get('/getDL2', async (req, res) => {
     { recursive: true, force: true },
     (err) => {
       console.log(err)
+      res.send(err)
     }
   )
   const height = getResolutionHeight(req.query.height)
