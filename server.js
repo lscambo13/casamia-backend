@@ -142,7 +142,6 @@ app.get('/getDL', async (req, res) => {
   const config = [
     req.query.url,
     '--ffmpeg-location', ffmpeg,
-    '--downloader', 'ffmpeg',
     '-o', '-',
     '-S', `res:${height},fps`
   ]
@@ -156,6 +155,12 @@ app.get('/getDL', async (req, res) => {
   });
 
   ytDlpProcess.stdout.pipe(res);
+
+  res.on('close', () => {
+    ytDlpProcess.stdout.destroy();
+    ytDlpProcess.stderr.destroy();
+    ytDlpProcess.kill('SIGINT');
+  })
 });
 
 app.get('/dl', async (req, res) => {
