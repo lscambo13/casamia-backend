@@ -14,8 +14,8 @@ if (process.platform === 'win32') {
   cache = "./yt-dlp-cache"
 } else {
   ytdlp = "/home/ubuntu/.local/bin/yt-dlp"
-  ffmpeg = "./ffmpeg-n6.1-latest-linux64-gpl-6.1/bin/ffmpeg"
-  cache = "./yt-dlp-cache"
+  ffmpeg = "/home/ubuntu/casamia-backend/ffmpeg-n6.1-latest-linux64-gpl-6.1/bin/ffmpeg"
+  cache = "/home/ubuntu/casamia-backend/yt-dlp-cache"
 }
 
 // https://jackett.cambo.in/api/v2.0/indexers/all/results?apikey=${secret}&Query=${query}
